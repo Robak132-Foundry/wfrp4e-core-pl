@@ -1067,14 +1067,16 @@ function isPackTranslated(packKey) {
 	});
 }
 
+const SUPPLEMENT_CHECKS_ENABLED = false;
+
 function isRequirementMet(requirement) {
-	if (!requirement) {
+	if (!requirement || !SUPPLEMENT_CHECKS_ENABLED) {
 		return true;
 	}
 	return isPackAvailable(requirement);
 }
 
-const isPackJournalAvailable = isPackAvailable;
+const isPackJournalAvailable = packKey => !SUPPLEMENT_CHECKS_ENABLED || isPackAvailable(packKey);
 
 function getLocalizedSubspeciesName(species, subKey, fallbackName) {
 	if (game.i18n?.lang !== "pl") return fallbackName;
@@ -1311,6 +1313,32 @@ const CAREER_CLASS_MAP = {
 	"Rogues": "Łotry",
 	"Warriors": "Wojownicy",
 };
+
+const POLISH_CLASS_TRAPPINGS = {
+	"Uczeni": "ClassTrappings.Academics",
+	"Uczony": "ClassTrappings.Academics",
+	"Dworzanie": "ClassTrappings.Courtiers",
+	"Dworzanin": "ClassTrappings.Courtiers",
+	"Mieszczanie": "ClassTrappings.Burghers",
+	"Mieszczanin": "ClassTrappings.Burghers",
+	"Pospólstwo": "ClassTrappings.Peasants",
+	"Wędrowcy": "ClassTrappings.Rangers",
+	"Wędrowiec": "ClassTrappings.Rangers",
+	"Wodniacy": "ClassTrappings.Riverfolk",
+	"Wodniak": "ClassTrappings.Riverfolk",
+	"Łotry": "ClassTrappings.Rogues",
+	"Łotr": "ClassTrappings.Rogues",
+	"Wojownicy": "ClassTrappings.Warriors",
+	"Wojownik": "ClassTrappings.Warriors",
+};
+
+Hooks.on("ready", () => {
+	const classTrappings = game.wfrp4e?.config?.classTrappings;
+	if (!classTrappings) return;
+	for (const [className, key] of Object.entries(POLISH_CLASS_TRAPPINGS)) {
+		classTrappings[className] ??= game.i18n.localize(key);
+	}
+});
 
 const CAREER_GROUP_FALLBACK = {
 	"Advisor": "Doradca",
@@ -2041,7 +2069,7 @@ const SETTLEMENT_NAME_TRANSLATIONS = {
 };
 
 function isModuleSourceAvailable(cfg) {
-	if (!cfg) return true;
+	if (!cfg || !SUPPLEMENT_CHECKS_ENABLED) return true;
 	if (cfg.id && game.modules?.get(cfg.id)?.active) {
 		return true;
 	}
